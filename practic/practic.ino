@@ -1,64 +1,48 @@
-#include <Wire.h>
-#include <math.h>
+#include <I2Cdev.h>
+#include <MPU6050.h>
+#define _LCD_TYPE 1
+#include <LiquidCrystal_I2C.h>
+//#include <LCD_1602_RUS_ALL.h>
+//LCD_1602_RUS lcd(0x27, 16, 2);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+#define T_OUT 20
 
-const int MPU_addr = 0x68; // Адрес MPU-6050
+MPU6050 accel;
 
-int16_t accelerometerX, accelerometerY, accelerometerZ; // Переменные для хранения значений ускорения
-
-float sumacc;
-
+unsigned long int t_next;
+double x;
 void setup() {
-  Wire.begin(); // Инициализация шины I2C
-  Serial.begin(9600); // Инициализация монитора серийного порта
+Serial.begin(9600);
+accel.initialize();
+accel.setFullScaleAccelRange(MPU6050_ACCEL_FS_16);
+Serial.println(accel.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+lcd.init();
+lcd.backlight();
 
-  // Установка режима активации акселерометра
-  Wire.beginTransmission(MPU_addr);
-  Wire.write(0x6B);
-  Wire.write(0);
-  Wire.endTransmission(true);
-
-  delay(100); // Задержка для стабилизации
 }
 
 void loop() {
-  // Чтение значений ускорения по осям X, Y и Z
-  Wire.beginTransmission(MPU_addr);
-  Wire.write(0x3B); // Адрес регистра начала чтения данных акселерометра
-  Wire.endTransmission(false);
-  Wire.requestFrom(MPU_addr, 6, true);
+long int t = millis();
 
-  accelerometerX = Wire.read() << 8 | Wire.read();
-  accelerometerY = Wire.read() << 8 | Wire.read();
-  accelerometerZ = Wire.read() << 8 | Wire.read();
+if( t_next < t ){
+int16_t ax_raw, ay_raw, az_raw, gx_raw, gy_raw, gz_raw;
 
-  // Преобразование значений в g
-  float accelerationX = accelerometerX;
-  float accelerationY = accelerometerY;
-  float accelerationZ = accelerometerZ;
+t_next = t + T_OUT;
+accel.getMotion6(&ax_raw, &ay_raw, &az_raw, &gx_raw, &gy_raw, &gz_raw);
+lcd.setCursor(0, 0);
+//string x = ax_raw / 2048.0;
+//lcd.print(x);
 
-  sumacc = sqrt(pow(accelerationX,2)+pow(accelerationY,2)+pow(accelerationZ,2))/ 14600;
+x = ax_raw / 2048.;
 
-  // // Вывод значений ускорения
-  // Serial.print("Ускорение X: ");
-  // Serial.print(accelerationX);
-  // Serial.print(" g ");
-  // Serial.println(" ");
-
-  // Serial.print("Ускорение Y: ");
-  // Serial.print(accelerationY);
-  // Serial.print(" g ");
-  // Serial.print(" ");
-
-  // Serial.print("Ускорение Z: ");
-  // Serial.print(accelerationZ);
-  // Serial.println(" g ");
-
-  // Serial.print("Общее ускорение: ");
-  Serial.println(sumacc);
-  // Serial.println(" g ");
-
-
-
-
-
+if (x > -0.15){
+  x = 0;
 }
+
+lcd.setCursor(0, 0);
+lcd.print(x);
+Serial.println(-x); // вывод в порт проекции ускорения на ось Y
+}
+delay(20);
+}
+
