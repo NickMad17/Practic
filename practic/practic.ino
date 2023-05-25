@@ -35,14 +35,13 @@ lcd.setCursor(0, 0);
 
 x = ax_raw / 2048.;
 
-if (x > -0.15){
+if (x > -0.15 || x < 0.15){
   x = 0;
-}
+};
 
 lcd.setCursor(0, 0);
 lcd.print(x);
-Serial.println(-x); // вывод в порт проекции ускорения на ось Y
-}
+Serial.println(x, 2); // вывод в порт проекции ускорения на ось Y
+};
 delay(20);
 }
-
