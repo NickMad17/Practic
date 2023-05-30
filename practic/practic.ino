@@ -2,6 +2,7 @@
 #include <MPU6050.h>
 #define _LCD_TYPE 1
 #include <LiquidCrystal_I2C.h>
+#include <Math.h>
 //#include <LCD_1602_RUS_ALL.h>
 //LCD_1602_RUS lcd(0x27, 16, 2);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -35,13 +36,14 @@ lcd.setCursor(0, 0);
 
 x = ax_raw / 2048.;
 
-if (x > -0.15 || x < 0.15){
+if (x < 0.2 && x > -0.2){
   x = 0;
 };
 
 lcd.setCursor(0, 0);
 lcd.print(x);
-Serial.println(x, 2); // вывод в порт проекции ускорения на ось Y
+Serial.println("$");
+Serial.println((x*100),0); // вывод в порт проекции ускорения на ось Y
+Serial.println(";");
 };
-delay(20);
 }
